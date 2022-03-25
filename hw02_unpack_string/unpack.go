@@ -16,8 +16,8 @@ func Unpack(input string) (string, error) {
 
 	var output strings.Builder
 
-	var cur rune = 0
-	var prev rune = 0
+	var cur rune
+	var prev rune
 
 	var curStr string
 
@@ -52,8 +52,7 @@ func Unpack(input string) (string, error) {
 
 func removeLastSymbol(s string) string {
 	runes := []rune(s)
-	lenOfString := len(runes)
-	if lenOfString > 1 {
+	if lenOfString := len(runes); lenOfString > 1 {
 		return string(runes[0 : lenOfString-1])
 	}
 	return ""
