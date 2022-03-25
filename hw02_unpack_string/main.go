@@ -1,19 +1,19 @@
 package main
 
 import (
-    "flag"
-    "fmt"
+	"flag"
+	"fmt"
 
-    unpacking"./hw02unpackstring"
+	unpacking "./hw02unpackstring"
 )
 
 func main() {
-    var input string
+	var input string
 
-    flag.StringVar(&input, "input", "", "Unpack the string")
-    flag.Parse()
+	flag.StringVar(&input, "input", "", "Unpack the string")
+	flag.Parse()
 
-    result, error := unpacking.Unpack(input)
+	result, error := unpacking.Unpack(input)
 
-    fmt.Println(result, error)
+	fmt.Println(result, error)
 }

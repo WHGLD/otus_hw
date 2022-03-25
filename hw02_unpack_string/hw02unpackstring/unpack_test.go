@@ -17,13 +17,13 @@ func TestUnpack(t *testing.T) {
 		{input: "", expected: ""},
 		{input: "aaa0b", expected: "aab"},
 		// Cyrillic
-        {input: "аааыыы", expected: "аааыыы"},
-        {input: "абвгд4", expected: "абвгдддд"},
-        {input: "б0", expected: ""},
+		{input: "аааыыы", expected: "аааыыы"},
+		{input: "абвгд4", expected: "абвгдддд"},
+		{input: "б0", expected: ""},
 		// Spaces
-        {input: "ab  ccd", expected: "ab  ccd"},
-        {input: "  ", expected: "  "},
-        {input: "  bb3", expected: "  bbbb"},
+		{input: "ab  ccd", expected: "ab  ccd"},
+		{input: "  ", expected: "  "},
+		{input: "  bb3", expected: "  bbbb"},
 		// uncomment if task with asterisk completed
 		// {input: `qwe\4\5`, expected: `qwe45`},
 		// {input: `qwe\45`, expected: `qwe44444`},

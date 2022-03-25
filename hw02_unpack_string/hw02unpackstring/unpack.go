@@ -1,10 +1,10 @@
 package hw02unpackstring
 
 import (
-    "strings"
-    "unicode"
-    "strconv"
 	"errors"
+	"strconv"
+	"strings"
+	"unicode"
 )
 
 var ErrInvalidString = errors.New("invalid string")
@@ -14,52 +14,52 @@ func Unpack(input string) (string, error) {
 		return "", nil
 	}
 
-    var output strings.Builder
+	var output strings.Builder
 
-    var cur rune = 0
-    var prev rune = 0
+	var cur rune = 0
+	var prev rune = 0
 
-    var curStr string
+	var curStr string
 
-    runeList := []rune(input)
+	runeList := []rune(input)
 
-    for i := 0; i < len(runeList); i++ {
-        cur = runeList[i]
-        if i > 0 {
-            prev = runeList[i-1]
-        }
+	for i := 0; i < len(runeList); i++ {
+		cur = runeList[i]
+		if i > 0 {
+			prev = runeList[i-1]
+		}
 
-        if unicode.IsDigit(cur) {
-            if prev == 0 || unicode.IsDigit(prev) {
-                return "", ErrInvalidString
-            }
+		if unicode.IsDigit(cur) {
+			if prev == 0 || unicode.IsDigit(prev) {
+				return "", ErrInvalidString
+			}
 
-            if runeIndex := parseInt(string(cur)); runeIndex == 0 {
-                curStr = removeLastSymbol(output.String())
-                output.Reset()
-            } else {
-                curStr = strings.Repeat(string(prev), runeIndex-1)
-            }
-        } else {
-            curStr = string(cur)
-        }
+			if runeIndex := parseInt(string(cur)); runeIndex == 0 {
+				curStr = removeLastSymbol(output.String())
+				output.Reset()
+			} else {
+				curStr = strings.Repeat(string(prev), runeIndex-1)
+			}
+		} else {
+			curStr = string(cur)
+		}
 
-        output.WriteString(curStr)
-    }
+		output.WriteString(curStr)
+	}
 
 	return output.String(), nil
 }
 
 func removeLastSymbol(s string) string {
-    runes := []rune(s)
-    lenOfString := len(runes)
-    if lenOfString > 1 {
-        return string(runes[0 : lenOfString-1])
-    }
-    return ""
+	runes := []rune(s)
+	lenOfString := len(runes)
+	if lenOfString > 1 {
+		return string(runes[0 : lenOfString-1])
+	}
+	return ""
 }
 
 func parseInt(s string) int {
-    res, _ := strconv.Atoi(s)
-    return res
+	res, _ := strconv.Atoi(s)
+	return res
 }
