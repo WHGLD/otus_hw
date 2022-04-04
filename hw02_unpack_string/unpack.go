@@ -35,8 +35,8 @@ func Unpack(input string) (string, error) {
 				return "", ErrInvalidString
 			}
 
-			runeIndex, e := strconv.Atoi(string(cur))
-			if e != nil {
+			runeIndex, err := strconv.Atoi(string(cur))
+			if err != nil {
 				return "", ErrInvalidIntParsing
 			}
 
