@@ -8,6 +8,7 @@ import (
 )
 
 var ErrInvalidString = errors.New("invalid string")
+var ErrInvalidIntParsing = errors.New("invalid integer parsing")
 
 func Unpack(input string) (string, error) {
 	if input == "" {
@@ -34,7 +35,12 @@ func Unpack(input string) (string, error) {
 				return "", ErrInvalidString
 			}
 
-			if runeIndex := parseInt(string(cur)); runeIndex == 0 {
+			runeIndex, e := strconv.Atoi(string(cur))
+			if e != nil {
+				return "", ErrInvalidIntParsing
+			}
+
+			if runeIndex == 0 {
 				curStr = removeLastSymbol(output.String())
 				output.Reset()
 			} else {
@@ -56,9 +62,4 @@ func removeLastSymbol(s string) string {
 		return string(runes[0 : lenOfString-1])
 	}
 	return ""
-}
-
-func parseInt(s string) int {
-	res, _ := strconv.Atoi(s)
-	return res
 }
