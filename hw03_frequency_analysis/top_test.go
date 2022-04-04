@@ -105,18 +105,18 @@ func TestProcessorCountWord(t *testing.T) {
 
 func TestProcessorGetTop10Words(t *testing.T) {
 	sourceList := []WordCount{
-		WordCount{"тест1", 10},
-		WordCount{"тест2", 9},
-		WordCount{"тест3", 9},
-		WordCount{"тест4", 8},
-		WordCount{"тест5", 7},
-		WordCount{"тест6", 6},
-		WordCount{"тест7", 5},
-		WordCount{"тест8", 4},
-		WordCount{"тест9", 3},
-		WordCount{"тест10", 2},
-		WordCount{"тест11", 2},
-		WordCount{"тест12", 2},
+		{"тест1", 10},
+		{"тест2", 9},
+		{"тест3", 9},
+		{"тест4", 8},
+		{"тест5", 7},
+		{"тест6", 6},
+		{"тест7", 5},
+		{"тест8", 4},
+		{"тест9", 3},
+		{"тест10", 2},
+		{"тест11", 2},
+		{"тест12", 2},
 	}
 
 	expectedList := []string{

@@ -12,7 +12,7 @@ func RunSort(wordCountsList []WordCount) []WordCount {
 	}
 
 	// сортируем группы по частотности
-	var keys []int
+	keys := make([]int, 0, len(m))
 	for k := range m {
 		keys = append(keys, k)
 	}
