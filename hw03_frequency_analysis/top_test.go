@@ -80,3 +80,61 @@ func TestTop10(t *testing.T) {
 		}
 	})
 }
+
+func TestProcessorCountWord(t *testing.T) {
+	var processor CountProcessor
+
+	wordsList := []string{
+		"два",
+		"один",
+		"два",
+		"два?",
+		"Два?",
+	}
+	expectedCount := 2
+
+	for _, word := range wordsList {
+		processor.CountWord(word)
+	}
+
+	testingWordIndex, _ := processor.getListIndex("два")
+	testingWordCount := processor.list[testingWordIndex]
+
+	require.Equal(t, expectedCount, testingWordCount.n)
+}
+
+func TestProcessorGetTop10Words(t *testing.T) {
+	sourceList := []WordCount{
+		WordCount{"тест1", 10},
+		WordCount{"тест2", 9},
+		WordCount{"тест3", 9},
+		WordCount{"тест4", 8},
+		WordCount{"тест5", 7},
+		WordCount{"тест6", 6},
+		WordCount{"тест7", 5},
+		WordCount{"тест8", 4},
+		WordCount{"тест9", 3},
+		WordCount{"тест10", 2},
+		WordCount{"тест11", 2},
+		WordCount{"тест12", 2},
+	}
+
+	expectedList := []string{
+		"тест1",
+		"тест2",
+		"тест3",
+		"тест4",
+		"тест5",
+		"тест6",
+		"тест7",
+		"тест8",
+		"тест9",
+		"тест10",
+	}
+
+	var processor CountProcessor
+	processor.list = sourceList
+
+	processor.GetTop10Words()
+	require.Equal(t, expectedList, processor.GetTop10Words())
+}
