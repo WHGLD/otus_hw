@@ -8,6 +8,7 @@ import (
 )
 
 var ErrInvalidString = errors.New("invalid string")
+
 var ErrInvalidIntParsing = errors.New("invalid integer parsing")
 
 func Unpack(input string) (string, error) {
@@ -30,7 +31,7 @@ func Unpack(input string) (string, error) {
 			prev = runeList[i-1]
 		}
 
-		if unicode.IsDigit(cur) {
+		if unicode.IsDigit(cur) { //nolint:nestif
 			if prev == 0 || unicode.IsDigit(prev) {
 				return "", ErrInvalidString
 			}
