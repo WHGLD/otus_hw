@@ -14,10 +14,9 @@ type Task func() error
 // Run m - кол-во ошибок
 func Run(tasks []Task, n, m int) error {
 	if n <= 0 || m <= 0 {
-		return ErrErrorsLimitExceeded // todo unit test
+		return ErrErrorsLimitExceeded
 	}
 
-	// спорный момент, возможно не надо так делать и в тестах упадет
 	if len(tasks) < n {
 		n = len(tasks)
 	}
@@ -32,7 +31,7 @@ func Run(tasks []Task, n, m int) error {
 		go func() {
 			defer wg.Done()
 
-			// разбираем задачи из потока и обновляем ErrsCount
+			// разбираем задачи из потока и обновляем errsCount
 			for task := range tasksChan {
 				result := task()
 				if result != nil {
