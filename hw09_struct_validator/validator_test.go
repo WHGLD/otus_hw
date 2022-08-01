@@ -40,12 +40,6 @@ type (
 )
 
 func TestValidate(t *testing.T) {
-	//u := User{}
-	//err := Validate(u)
-	//if err != nil {
-	//	return
-	//}
-
 	tests := []struct {
 		in          interface{}
 		expectedErr error
@@ -57,24 +51,30 @@ func TestValidate(t *testing.T) {
 			},
 		},
 		{App{Version: "12345"}, nil},
-		//
-		//{Response{Code: 200, Body: ""}, nil},
-		//{Response{Code: 201, Body: ""}, ValidationErrors{ValidationError{Field: "Code", Err: ErrIn}}},
-		//
-		//{Response{Code: 403, Body: ""}, ValidationErrors{ValidationError{Field: "Code", Err: ErrIn}}},
-		//{Response{Code: 404, Body: ""}, nil},
-		//
-		//{Response{Code: 500, Body: ""}, nil},
-		//{Response{Code: 501, Body: ""}, ValidationErrors{ValidationError{Field: "Code", Err: ErrIn}}},
 
-		{User{
-			ID:     "12345",
-			Name:   "",
-			Age:    99,
-			Email:  "email@ya.ru",
-			Role:   "admin",
-			Phones: []string{"12345678912"},
-		}, nil},
+		{
+			Response{Code: 200, Body: ""},
+			ValidationErrors{
+				ValidationError{"Code", errors.New("in rules is not valid")},
+			},
+		},
+
+		{Token{}, nil},
+
+		{
+			User{
+				ID:     "12345",
+				Name:   "",
+				Age:    111,
+				Email:  "email@ya.ru",
+				Role:   "admin",
+				Phones: []string{"12345678912"},
+			},
+			ValidationErrors{
+				ValidationError{"ID", errors.New("value len is not correct")},
+				ValidationError{"Age", errors.New("value > max")},
+			},
+		},
 	}
 
 	for i, tt := range tests {
@@ -92,4 +92,18 @@ func TestValidate(t *testing.T) {
 			_ = tt
 		})
 	}
+
+	t.Run(fmt.Sprintf("case - not correct in"), func(t *testing.T) {
+		in := "not struct"
+		errOut := NewProgramError("the input is not a struct, app stopped")
+
+		err := Validate(in)
+		if err == nil {
+			require.NoError(t, err)
+		} else {
+			require.ErrorAs(t, err, &ProgramError{})
+			require.EqualError(t, err, errOut.Error())
+		}
+	})
+
 }

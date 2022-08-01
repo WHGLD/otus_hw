@@ -61,7 +61,7 @@ func Validate(v interface{}) error {
 
 	if value.Kind() != reflect.Struct {
 		// program error
-		return NewProgramError("the input is not a struct. APP STOPPED.")
+		return NewProgramError("the input is not a struct, app stopped")
 	}
 
 	for i := 0; i < valueType.NumField(); i++ {
@@ -71,7 +71,7 @@ func Validate(v interface{}) error {
 			continue
 		}
 
-		fieldValue := value.Field(i).String()
+		fieldValue := value.Field(i)
 		rules := field.Tag.Get("validate")
 		if rules == "" {
 			continue
@@ -81,26 +81,48 @@ func Validate(v interface{}) error {
 		switch field.Type.Kind() {
 		case reflect.Int:
 			//
-			errList := validateInt(fieldValue, field.Name, rulesSlice)
+			errList := validateInt(fieldValue.Int(), field.Name, rulesSlice)
 			if len(errList) != 0 {
 				// validation error
-				errorList.Add(errList)
+				errorList = errorList.Add(errList)
 			}
 
 		case reflect.String:
 			//
-			errList := validateString(fieldValue, field.Name, rulesSlice)
+			errList := validateString(fieldValue.String(), field.Name, rulesSlice)
 			if len(errList) != 0 {
 				// validation error
-				errorList.Add(errList)
+				errorList = errorList.Add(errList)
 			}
 
 		case reflect.Slice:
 			//
-			sliceErrorList := validateSlice(fieldValue, field.Name, rulesSlice)
-			if len(sliceErrorList) != 0 {
+			var sliceErrorList []ValidationError
+
+			switch fieldValue.Interface().(type) {
+			case []int:
+				sliceValues := fieldValue.Interface().([]int)
+				for _, item := range sliceValues {
+					errIntList := validateInt(int64(item), field.Name, rulesSlice)
+					if len(errIntList) != 0 {
+						// validation error
+						sliceErrorList = append(sliceErrorList, errIntList...)
+					}
+				}
+			case []string:
+				sliceValues := fieldValue.Interface().([]string)
+				for _, item := range sliceValues {
+					errStrList := validateString(item, field.Name, rulesSlice)
+					if len(errStrList) != 0 {
+						// validation error
+						sliceErrorList = append(sliceErrorList, errStrList...)
+					}
+				}
+			}
+
+			if len(sliceErrorList) > 0 {
 				// validation error
-				errorList.Add(sliceErrorList)
+				errorList = errorList.Add(sliceErrorList)
 			}
 
 		default:
@@ -119,53 +141,7 @@ func Validate(v interface{}) error {
 	return errorList
 }
 
-func validateSlice(fieldValue, filedName string, rulesSlice []string) []ValidationError {
-	var errList []ValidationError
-
-	if len(fieldValue) == 0 {
-		// validation error
-		errList = append(
-			errList,
-			NewValidationError(
-				filedName,
-				errors.New("the slice is empty to validate"),
-			),
-		)
-		return errList
-	}
-
-	for _, item := range fieldValue {
-		itemType := reflect.TypeOf(item).Kind()
-		if itemType == reflect.Int {
-			errIntList := validateInt(fieldValue, filedName, rulesSlice)
-			if len(errIntList) != 0 {
-				// validation error
-				errList = append(errList, errIntList...)
-			}
-
-		} else if itemType == reflect.String {
-			errStrList := validateString(fieldValue, filedName, rulesSlice)
-			if len(errStrList) != 0 {
-				// validation error
-				errList = append(errList, errStrList...)
-			}
-
-		} else {
-			// validation error
-			errList = append(
-				errList,
-				NewValidationError(
-					filedName,
-					errors.New("the slice data is not correct"),
-				),
-			)
-		}
-	}
-
-	return errList
-}
-
-func validateInt(fieldValue, filedName string, rulesSlice []string) []ValidationError {
+func validateInt(fieldValue int64, filedName string, rulesSlice []string) []ValidationError {
 	var errList []ValidationError
 
 	for _, rule := range rulesSlice {
@@ -175,7 +151,7 @@ func validateInt(fieldValue, filedName string, rulesSlice []string) []Validation
 		}
 
 		if ruleValue, ok := parsedRules["max"]; ok {
-			fieldValueInt, _ := strconv.Atoi(fieldValue)
+			fieldValueInt := int(fieldValue)
 			ruleValueInt, _ := strconv.Atoi(ruleValue)
 			if fieldValueInt > ruleValueInt {
 				// validation error
@@ -191,7 +167,7 @@ func validateInt(fieldValue, filedName string, rulesSlice []string) []Validation
 		}
 
 		if ruleValue, ok := parsedRules["min"]; ok {
-			fieldValueInt, _ := strconv.Atoi(fieldValue)
+			fieldValueInt := int(fieldValue)
 			ruleValueInt, _ := strconv.Atoi(ruleValue)
 			if fieldValueInt < ruleValueInt {
 				// validation error
@@ -207,9 +183,22 @@ func validateInt(fieldValue, filedName string, rulesSlice []string) []Validation
 		}
 
 		if ruleValue, ok := parsedRules["in"]; ok {
-			fieldValueInt, _ := strconv.Atoi(fieldValue)
+			fieldValueInt := int(fieldValue)
 
 			inValues := strings.Split(ruleValue, ",")
+
+			if len(inValues) != 2 {
+				// validation error
+				errList = append(
+					errList,
+					NewValidationError(
+						filedName,
+						errors.New("in rules is not valid"),
+					),
+				)
+				continue
+			}
+
 			min, _ := strconv.Atoi(inValues[0])
 			max, _ := strconv.Atoi(inValues[1])
 			if fieldValueInt < min || fieldValueInt > max {
@@ -270,9 +259,20 @@ func validateString(fieldValue, filedName string, rulesSlice []string) []Validat
 
 		if ruleValue, ok := parsedRules["in"]; ok {
 			inValues := strings.Split(ruleValue, ",")
-			min := inValues[0]
-			max := inValues[1]
-			if fieldValue == min || fieldValue == max {
+			if len(inValues) != 2 {
+				// validation error
+				errList = append(
+					errList,
+					NewValidationError(
+						filedName,
+						errors.New("in rules is not valid"),
+					),
+				)
+				continue
+			}
+			first := inValues[0]
+			second := inValues[1]
+			if fieldValue != first || fieldValue != second {
 				// validation error
 				errList = append(
 					errList,
@@ -293,7 +293,7 @@ func parseRules(source string) (paramsMap map[string]string, err error) {
 	regexps := map[string]string{
 		"max":    `(?P<max>:\d{1,})`,
 		"min":    `(?P<min>:\d{1,})`,
-		"in":     `(?P<in>:[0-9]{1,},[0-9]{1,})`,
+		"in":     `(?P<in>:.+)`,
 		"regexp": `(?P<regexp>:.+)`,
 		"len":    `(?P<len>:[0-9]{1,})`,
 	}
@@ -304,6 +304,7 @@ func parseRules(source string) (paramsMap map[string]string, err error) {
 		match, _ := regexp.MatchString(rule, source)
 		if match {
 			regEx = regex
+			break
 		}
 	}
 
