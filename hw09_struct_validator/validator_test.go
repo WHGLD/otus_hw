@@ -93,7 +93,7 @@ func TestValidate(t *testing.T) {
 		})
 	}
 
-	t.Run(fmt.Sprintf("case - not correct in"), func(t *testing.T) {
+	t.Run("case - not correct in", func(t *testing.T) {
 		in := "not struct"
 		errOut := NewProgramError("the input is not a struct, app stopped")
 
@@ -105,5 +105,4 @@ func TestValidate(t *testing.T) {
 			require.EqualError(t, err, errOut.Error())
 		}
 	})
-
 }

@@ -67,7 +67,7 @@ func Validate(v interface{}) error {
 	for i := 0; i < valueType.NumField(); i++ {
 		field := valueType.Field(i)
 
-		if isPrivateField(field.Name) == true {
+		if isPrivateField(field.Name) {
 			continue
 		}
 
@@ -244,7 +244,7 @@ func validateString(fieldValue, filedName string, rulesSlice []string) []Validat
 
 		if ruleValue, ok := parsedRules["regexp"]; ok {
 			match, _ := regexp.MatchString(ruleValue, fieldValue)
-			if match == false {
+			if !match {
 				// validation error
 				errList = append(
 					errList,
