@@ -1,17 +1,14 @@
-//go:generate easyjson -no_std_marshalers stats.go
 package hw10programoptimization
 
 import (
-	"bufio"
+	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"regexp"
 	"strings"
-
-	"github.com/mailru/easyjson"
 )
 
-//easyjson:json
 type User struct {
 	ID       int
 	Name     string
@@ -35,18 +32,18 @@ func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 type users [100_000]User
 
 func getUsers(r io.Reader) (result users, err error) {
+	content, err := ioutil.ReadAll(r)
+	if err != nil {
+		return
+	}
 
-	scanner := bufio.NewScanner(r)
-	scanner.Split(bufio.ScanLines)
-
-	index := 0
-	for scanner.Scan() {
+	lines := strings.Split(string(content), "\n")
+	for i, line := range lines {
 		var user User
-		if err = easyjson.Unmarshal(scanner.Bytes(), &user); err != nil {
-			continue
+		if err = json.Unmarshal([]byte(line), &user); err != nil {
+			return
 		}
-		result[index] = user
-		index++
+		result[i] = user
 	}
 	return
 }
@@ -54,14 +51,16 @@ func getUsers(r io.Reader) (result users, err error) {
 func countDomains(u users, domain string) (DomainStat, error) {
 	result := make(DomainStat)
 
-	regEx, _ := regexp.Compile("\\." + domain)
-
 	for _, user := range u {
-		if matched := regEx.MatchString(user.Email); matched {
-			domainEmail := strings.SplitN(user.Email, "@", 2)[1]
-			num := result[strings.ToLower(domainEmail)]
+		matched, err := regexp.Match("\\."+domain, []byte(user.Email))
+		if err != nil {
+			return nil, err
+		}
+
+		if matched {
+			num := result[strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])]
 			num++
-			result[strings.ToLower(domainEmail)] = num
+			result[strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])] = num
 		}
 	}
 	return result, nil
