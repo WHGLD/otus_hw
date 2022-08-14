@@ -78,7 +78,7 @@ func Validate(v interface{}) error {
 		}
 		rulesSlice := strings.Split(rules, "|")
 
-		switch field.Type.Kind() {
+		switch field.Type.Kind() { //nolint
 		case reflect.Int:
 			//
 			errList := validateInt(fieldValue.Int(), field.Name, rulesSlice)
@@ -97,29 +97,7 @@ func Validate(v interface{}) error {
 
 		case reflect.Slice:
 			//
-			var sliceErrorList []ValidationError
-
-			switch fieldValue.Interface().(type) {
-			case []int:
-				sliceValues := fieldValue.Interface().([]int)
-				for _, item := range sliceValues {
-					errIntList := validateInt(int64(item), field.Name, rulesSlice)
-					if len(errIntList) != 0 {
-						// validation error
-						sliceErrorList = append(sliceErrorList, errIntList...)
-					}
-				}
-			case []string:
-				sliceValues := fieldValue.Interface().([]string)
-				for _, item := range sliceValues {
-					errStrList := validateString(item, field.Name, rulesSlice)
-					if len(errStrList) != 0 {
-						// validation error
-						sliceErrorList = append(sliceErrorList, errStrList...)
-					}
-				}
-			}
-
+			sliceErrorList := validateSlice(fieldValue.Interface(), field.Name, rulesSlice)
 			if len(sliceErrorList) > 0 {
 				// validation error
 				errorList = errorList.Add(sliceErrorList)
@@ -141,6 +119,31 @@ func Validate(v interface{}) error {
 	return errorList
 }
 
+func validateSlice(fieldValue interface{}, filedName string, rulesSlice []string) []ValidationError {
+	var sliceErrorList []ValidationError
+
+	switch sliceValues := fieldValue.(type) {
+	case []int:
+		for _, item := range sliceValues {
+			errIntList := validateInt(int64(item), filedName, rulesSlice)
+			if len(errIntList) != 0 {
+				// validation error
+				sliceErrorList = append(sliceErrorList, errIntList...)
+			}
+		}
+	case []string:
+		for _, item := range sliceValues {
+			errStrList := validateString(item, filedName, rulesSlice)
+			if len(errStrList) != 0 {
+				// validation error
+				sliceErrorList = append(sliceErrorList, errStrList...)
+			}
+		}
+	}
+
+	return sliceErrorList
+}
+
 func validateInt(fieldValue int64, filedName string, rulesSlice []string) []ValidationError {
 	var errList []ValidationError
 
@@ -152,7 +155,10 @@ func validateInt(fieldValue int64, filedName string, rulesSlice []string) []Vali
 
 		if ruleValue, ok := parsedRules["max"]; ok {
 			fieldValueInt := int(fieldValue)
-			ruleValueInt, _ := strconv.Atoi(ruleValue)
+			ruleValueInt, errInt := strconv.Atoi(ruleValue)
+			if errInt != nil {
+				continue
+			}
 			if fieldValueInt > ruleValueInt {
 				// validation error
 				errList = append(
@@ -168,7 +174,10 @@ func validateInt(fieldValue int64, filedName string, rulesSlice []string) []Vali
 
 		if ruleValue, ok := parsedRules["min"]; ok {
 			fieldValueInt := int(fieldValue)
-			ruleValueInt, _ := strconv.Atoi(ruleValue)
+			ruleValueInt, errInt := strconv.Atoi(ruleValue)
+			if errInt != nil {
+				continue
+			}
 			if fieldValueInt < ruleValueInt {
 				// validation error
 				errList = append(
@@ -228,7 +237,10 @@ func validateString(fieldValue, filedName string, rulesSlice []string) []Validat
 		}
 
 		if ruleValue, ok := parsedRules["len"]; ok {
-			ruleValueInt, _ := strconv.Atoi(ruleValue)
+			ruleValueInt, errStr := strconv.Atoi(ruleValue)
+			if errStr != nil {
+				continue
+			}
 			if len(fieldValue) != ruleValueInt {
 				// validation error
 				errList = append(
@@ -243,8 +255,8 @@ func validateString(fieldValue, filedName string, rulesSlice []string) []Validat
 		}
 
 		if ruleValue, ok := parsedRules["regexp"]; ok {
-			match, _ := regexp.MatchString(ruleValue, fieldValue)
-			if !match {
+			match, errRegEx := regexp.MatchString(ruleValue, fieldValue)
+			if !match || errRegEx != nil {
 				// validation error
 				errList = append(
 					errList,
@@ -270,9 +282,8 @@ func validateString(fieldValue, filedName string, rulesSlice []string) []Validat
 				)
 				continue
 			}
-			first := inValues[0]
-			second := inValues[1]
-			if fieldValue != first || fieldValue != second {
+
+			if !contains(inValues, fieldValue) {
 				// validation error
 				errList = append(
 					errList,
@@ -290,38 +301,15 @@ func validateString(fieldValue, filedName string, rulesSlice []string) []Validat
 }
 
 func parseRules(source string) (paramsMap map[string]string, err error) {
-	regexps := map[string]string{
-		"max":    `(?P<max>:\d{1,})`,
-		"min":    `(?P<min>:\d{1,})`,
-		"in":     `(?P<in>:.+)`,
-		"regexp": `(?P<regexp>:.+)`,
-		"len":    `(?P<len>:[0-9]{1,})`,
-	}
-
-	var regEx string
-
-	for rule, regex := range regexps {
-		match, _ := regexp.MatchString(rule, source)
-		if match {
-			regEx = regex
-			break
-		}
-	}
-
 	paramsMap = make(map[string]string)
 
-	if regEx == "" {
+	parsedSource := strings.Split(source, ":")
+	ruleKey := parsedSource[0]
+	ruleParam := parsedSource[1]
+	paramsMap[ruleKey] = ruleParam
+
+	if paramsMap == nil {
 		return paramsMap, NewProgramError("not acceptable validate rule")
-	}
-
-	compRegEx := regexp.MustCompile(regEx)
-	match := compRegEx.FindStringSubmatch(source)
-
-	for i, name := range compRegEx.SubexpNames() {
-		if i > 0 && i <= len(match) {
-			value := strings.ReplaceAll(match[i], ":", "")
-			paramsMap[name] = value
-		}
 	}
 
 	return paramsMap, nil
@@ -330,4 +318,13 @@ func parseRules(source string) (paramsMap map[string]string, err error) {
 func isPrivateField(name string) bool {
 	firstRune := []rune(name)[0]
 	return unicode.IsLower(firstRune)
+}
+
+func contains(s []string, str string) bool {
+	for _, v := range s {
+		if v == str {
+			return true
+		}
+	}
+	return false
 }
