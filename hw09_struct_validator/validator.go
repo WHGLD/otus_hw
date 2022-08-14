@@ -308,7 +308,7 @@ func parseRules(source string) (paramsMap map[string]string, err error) {
 	ruleParam := parsedSource[1]
 	paramsMap[ruleKey] = ruleParam
 
-	if paramsMap == nil {
+	if len(paramsMap) == 0 {
 		return paramsMap, NewProgramError("not acceptable validate rule")
 	}
 
